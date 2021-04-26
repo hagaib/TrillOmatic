@@ -1,15 +1,34 @@
 function [ detect , segs , env] = longtrill_syllable_detectionAOI( x , fs , yin , aoipeaks , f0band , isplot)
-%LONGTRILL_SYLLABLE_DETECTIONAOI Summary of this function goes here
-%   Detailed explanation goes here
+% Algorithm implementation of syllable detection of a trill signal by 
+% by means of short time energy correlation analysis. The energy function
+% is correlated with itself using a short time correlation coefficient. 
+% For more information please see Msc thesis by Hagai Barmatz or 
+% appropriate paper.
+%
+% input parameters:
+% x: input signal (1D array)
+% fs: sample rate
+% yin: structure containing yin data. Output of
+% aoipeaks: normally this algorithm should be run after finding the f0
+%     area of interset and consequently using information of peaks detected 
+%     by that function. It is the second output of area_of_interest4.
+% f0band: [f_low, f_high]: lowest and highest values of the frequency
+%          band containing the fundamental frequency. The default one is
+%           [1800, 3500], frequency band for Halcyon Smyrnensis
+% is_plot: boolean parameter. toggle intermediate plotting for debugging
+% purposes.
+%
+% output parameters:
+% detect: indicator array, i.e. containing 1s for samples contained in 
+%       syllables and 0s for samples outside of detected syllables.
+% segs: array containig timestamps for start and stop time of each syllable
+% env: short time hamming windowed energy
 
-%to account for delay bug in double filtered xteo in area_of_interest4
-% delay = 0.02;
-% aoipeaks = aoipeaks - delay;
 time = (0:length(x)-1)/fs;
 
 periods = aoipeaks(2:end) - aoipeaks(1:end-1);
 
-%% TEO estimation
+%% Energy estimation
 wpass = f0band /fs *2;
 wstop = [wpass(1)*0.98 , wpass(2)*1.02];
 ftype = 'bandpass';
@@ -40,7 +59,6 @@ plot(hammingEnergyShort , 'g');
 plot([1,length(energy)],1.5*median(hammingEnergySteadystate)*[1,1],'r'); 
 plot([1,length(energy)],1.5*median(hammingEnergyShort)*[1,1],'m'); hold off
 end
-% [~ , threshold_teo , teotime] = trilltime_TEO(xx0 , fs);
 
 teo = teager(xx0);
 teo = [teo(1) ; teo ; teo(end)];
@@ -55,7 +73,7 @@ newNyquist = fs/s_winlen*30;
 subsampleFactor = floor(fs/(newNyquist*2));
 hammingEnergySubsample = hammingEnergy(1:subsampleFactor:end);
 
-[periods , peaklocs] = env_xcorr3([] , fs/subsampleFactor, time(1:subsampleFactor:end), hammingEnergySubsample , 5, isplot);
+[periods , peaklocs] = env_xcorr3([] , fs/subsampleFactor, hammingEnergySubsample, isplot);
 
 zcrwindur = 1/f0band(1)*5; % 5 cycles of the longest possible period
 winsamples = floor(-zcrwindur*fs/2):floor(zcrwindur*fs/2);
@@ -72,23 +90,6 @@ end
 
 % %% find ZCR outliers using quartiles
 q25 = prctile(peak_zcr,25); q75 = prctile(peak_zcr,75);
-% iqr_zcr = q75 - q25;
-% cutoff = iqr_zcr * 3;
-% lower = q25 - cutoff; upper = q75 + cutoff;
-% 
-% outliers = peak_zcr < lower | peak_zcr > upper;
-
-
-% % maybe with normal distribution approximation?
-% median_yin = median(peak_yin(floor(end/4):floor(end*3/4)));
-% stdev = std(peak_yin);
-% cutoff_stds = 3;
-% lower = median_yin - cutoff_stds*stdev; upper = median_yin + cutoff_stds*stdev;
-
-
-%% last chance: outliers with zcr at margins
-
-
 margin_t = 0.1; %seconds
 margin_s = floor(margin_t * fs);
 margin_zcr_l = zcr(x(1:1+margin_s),1/fs,1);
@@ -102,10 +103,7 @@ if(margin_zcr_l < q25 || margin_zcr_l > q75)
                 (peak_zcr(start_i) > margin_zcr_l && margin_zcr_l > q75)  ) &&...
                 peak_eng(start_i) < median(peak_eng)/10 ))
             break;
-        end
-%         if( ((peak_zcr(start_i) > margin_zcr_l || margin_zcr_l > q75) && ...
-%             (peak_zcr(start_i) < margin_zcr_l || margin_zcr_l < q25)) || ...
-%                 peak_eng(start_i)>median(peak_eng)/10) , break; end   
+        end 
     end
 end
 if(margin_zcr_r < q25 || margin_zcr_r > q75)
@@ -115,7 +113,6 @@ if(margin_zcr_r < q25 || margin_zcr_r > q75)
                 peak_eng(end_i) < median(peak_eng)/10 ))
             break;
         end
-%         if(peak_zcr(end_i) < margin_zcr_r || peak_eng(end_i)>median(peak_eng)/10) , break; end    
     end
 end
 outliers = 1:length(peaklocs) < start_i | 1:length(peaklocs) > end_i;
@@ -130,24 +127,6 @@ end
 
 
 [detect , segs , plotparams] = longtrill_segmentation(x , fs , hammingEnergy, peaklocs , 'adaptive' , hammingEnergyShort);
-
-% %% Detecting pulse interval
-% detect = zeros(size(x));
-% windur = 0.05;
-% % low = prcfilt(teotime, floor(windur*fs) , 5 , 'omitnan')+threshold_teo;
-% low = 2*median(hammingEnergyShort);
-% 
-% for i=1:length(peaklocs)
-%     istart = floor(peaklocs(i)*fs);
-%     iend = floor(peaklocs(i)*fs);
-%     while(istart>0 && hammingEnergyShort(istart)>low) , istart = istart-1; end
-%     while(iend<length(x) && hammingEnergyShort(iend)>low) , iend = iend+1; end
-%         
-%     detect(istart:iend) = 1;
-% end
-% 
-% detect = medfilt1(detect , 3);
-% segs = logical2segments(detect , fs);
 
 if(isplot)
 figure(301)

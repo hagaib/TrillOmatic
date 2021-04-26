@@ -1,7 +1,20 @@
 function [result_band , tpeaks] = area_of_interest4( audiofilename , isplot , x , fs)
-%GET_AOA Get Area of Interest of imput track 'audiofilename'
-% freqband = is a 2x1 array with low and high frequencies in band
-% This version has envelope cross correlation implemented
+% Calculates fundamental frequency area of interest of input signal.
+% For more information please refer to Msc thesis by Hagai Barmatz or 
+% the upcoming paper.
+%
+% input parameters:
+% audiofilename: input audio file name. It is ignored if parameters x and
+% fs are also specified.
+% is_plot: boolean parameter. toggle intermediate plotting for debugging
+% purposes.
+% x: input signal (1D array) (optional if audiofilename is specified)
+% fs: sample rate (optional if audiofilename is specified)
+%
+% output parameters:
+% result_band: is a 2x1 array with low and high frequencies in band
+% tpeaks: time instances of detected energy peaks in the relevant frequency
+% band
 
 
 %% Constants and parameters
@@ -365,7 +378,7 @@ for i=1:band_count
 
 %     [periods , peaklocs] = env_xcorr2(x , fs, time, xteo(:,i) , 10^-1, isplot);
     %use economic version: 
-    [periods , peaklocs] = env_xcorr3(x , economic_samplerate, time(1:subsample_factor:end), xteo_subsampled(:,i) , 10^-1, isplot);
+    [periods , peaklocs] = env_xcorr3(x , economic_samplerate, xteo_subsampled(:,i), isplot);
     peakloc_bands{i} = peaklocs;
     peaklocs = floor(peaklocs*economic_samplerate);
     p = 40; phigh = 5;
@@ -432,7 +445,10 @@ goodbands = goodbandsmean & goodbandsstd & goodbandsmeanvar;
 % [~,minband] = min(l2err);
 
 goodbands = freq_bands(goodbands,:);
-if(isempty(goodbands)) , result_band = [-inf , inf]; tpeaks = {nan}; else
+if(isempty(goodbands))
+    result_band = [-inf , inf];
+    tpeaks = {nan}; 
+else
     result_band = [min(goodbands(:,1)) max(goodbands(:,2))];
     result_band = result_band + additiveMargin * 10^3 * [-1 1];
     result_band(1) = max(result_band(1) , minfreq*10^3);

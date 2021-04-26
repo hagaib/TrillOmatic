@@ -1,6 +1,19 @@
-function [ periods , peaklocs , correlations ] = env_xcorr3( x , fs , time , env , margin_threshold, isplot)
-% Estimate periodicity (e.g. trill rate) according to cross-correlation in
-% the signal envelope. In case env in not a parameter, it is calculated.
+function [ periods , peaklocs , correlations ] = env_xcorr3( x , fs , env , isplot)
+% Estimate periodicity (e.g. trill rate) according to normalized cross-
+% correlation coefficient in the signal envelope . In case env in not a
+% paramerer, it is calculated in a naive manner using the hilbert transform
+%
+% inputs:
+% x: input signal
+% fs: sample frequency
+% env: signal envelope, e.g. smooth TEO or short time Hamming energy
+% isplot: boolean. toggles debug plotting
+%
+% outputs:
+% periods: array of detected periods
+% peaklocs: array of respective peak locations
+% correlations: array of correlation coefficient values of respective peak
+% locations
 
 maxrate = 75; %hz
 minrate = 6; %hz
@@ -36,21 +49,18 @@ figure(11)
 plot(filtenv)
 end
 
-initper = [];
-c = [];
-c2 = [];
 
 %% go forwards
 freqparams.maxper = maxper;
 freqparams.minper = minper;
 freqparams.search_area = [];
 [periods , peaklocs , correlations] = ...
-    subfunc_env_xcorr(env , freqparams , initper , peakloc , c , c2 , margin_env , margin_threshold , isplot);
+    subfunc_env_xcorr(env , freqparams , peakloc , margin_env , isplot);
 
 %% go backwards
 backind = peaklocs(1);
 [periods_back , peaklocs_back , correlations_back] = ...
-    subfunc_env_xcorr(env(end:-1:1), freqparams , initper , length(env)-backind , c , c2, margin_env(end:-1:1) , margin_threshold, isplot);
+    subfunc_env_xcorr(env(end:-1:1), freqparams , length(env)-backind , margin_env(end:-1:1), isplot);
 
 peaklocs_back = length(env) - peaklocs_back; 
 peaklocs = [peaklocs_back(end:-1:2) ; peaklocs];
@@ -59,10 +69,10 @@ peaklocs = [peaklocs_back(end:-1:2) ; peaklocs];
 freqparams.search_area = search_area;
 freqparams.median_period = prctile(peaklocs(2:end)-peaklocs(1:end-1) , 70);
 [periods , peaklocs , correlations] = ...
-    subfunc_env_xcorr(env , freqparams , initper , peakloc , c , c2, margin_env , margin_threshold , isplot);
+    subfunc_env_xcorr(env , freqparams, peakloc, margin_env , isplot);
 backind = peaklocs(1);
 [periods_back , peaklocs_back , correlations_back] = ...
-    subfunc_env_xcorr(env(end:-1:1), freqparams , initper , length(env)-backind , c , c2, margin_env(end:-1:1) , margin_threshold , isplot);
+    subfunc_env_xcorr(env(end:-1:1), freqparams , length(env)-backind , margin_env(end:-1:1) , isplot);
 
 %% pack everything up
 peaklocs_back = length(env) - peaklocs_back; 
@@ -73,12 +83,28 @@ periods = periods / fs;
 peaklocs = peaklocs / fs;
 
 
-function [periods , peaklocs , normcorrs] = subfunc_env_xcorr(env , freqparams , initper , initpeakloc , initnormcorrs , initcorr2 , margin_env, margin_threshold, isplot)
-% subfunction for self cross correlation
+function [periods , peaklocs , normcorrs] = subfunc_env_xcorr(env , freqparams , initpeakloc , margin_env, isplot)
+% subfunction for normalized cross correlation (STECC) coefficients
+% calculation and sequential processing
+% inputs:
+% env: smooth envelope of reference signal
+% freqparams: structure of frequency parameters {maxper, minper,
+% search_area, median_period}
+% initpeakloc: initial peak location. Should be found as the maximal peak
+% in the maximal energy distributed area of the signal's time
+% representation.
+% margin_env: envelope of the signal margins. Usually by concatenating the 
+% maximal period from both signal ends.
+% isplot: boolean. toggles debug plotting
+%
+% outputs:
+% periods: estimated periods of input signal syllables
+% peaklocs: peak locations of input signal syllables
+% normcorrs: normalized correlation coefficients (STECC) of syllable
+% centerd at peaks
 
-if(nargin < 8)
-    margin_threshold = 2;
-end
+
+margin_threshold = 1.2; % peak ratio thresold for subfuc stopping criteria
 
 if(isempty(freqparams.search_area))
     mmaxper = freqparams.maxper;
@@ -90,10 +116,9 @@ else
     mmaxper = floor( (1+search_area)*median_period );
 end
 
-periods = initper;
-peaklocs = [initpeakloc ; initpeakloc + initper];
-normcorrs = initnormcorrs;
-correlations2 = initcorr2;
+periods = [];
+peaklocs = [initpeakloc];
+normcorrs = [];
 while(peaklocs(end) + ceil(1.5*mmaxper) < length(env) )
     peakloc = peaklocs(end);
 
@@ -129,7 +154,6 @@ while(peaklocs(end) + ceil(1.5*mmaxper) < length(env) )
     halfper = floor(per/2);
     interval1 = peakloc + ( (-halfper):halfper );
     interval2 = interval1(end) + ( 1:length(interval1) ) ;
-    c2 = env(interval1)' * env(interval2);
 %     figure(10000)
 %     plot(env(interval1)/norm(env(interval1)))
 %     hold on
@@ -139,11 +163,8 @@ while(peaklocs(end) + ceil(1.5*mmaxper) < length(env) )
     c = c(1);
     if(c < 0.7)
         break ; end
-%     if(c2 < mean(correlations2) * corr2threshold)
-%         break; end
 
     [max_env , max_env_s] = max(env(interval2));
-    margin_threshold = 1.2;
     if(env(peaklocs(end) + per) < margin_env(peaklocs(end) + per)*margin_threshold)
         break; end
 
@@ -158,7 +179,6 @@ while(peaklocs(end) + ceil(1.5*mmaxper) < length(env) )
     periods = [periods; per];
     peaklocs = [peaklocs ; peakloc];
     normcorrs = [normcorrs; c];
-    correlations2 = [correlations2; c2];
     if(isplot)
         figure(120)
         plot(env)
