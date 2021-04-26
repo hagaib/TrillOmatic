@@ -1,5 +1,28 @@
 function [detect , segs , env , teo] = longtrill_syllable_detection41(x , fs , yin , filename , f0band)
-% Algorithm 3 implementation
+% Algorithm 3 implementation (YMFA). This algorithm performs syllable
+% detection of a trill signal by analyzing the neighbourhood variance of 
+% the change in the fundamental frequency of the signal. More details can 
+% be found in paper: Hagai Barmatz, Dana Klein, Yoni Vortman, Sivan Toledo, 
+% and Yizhar Lavner. Segmentation and analysis of bird trill vocalizations.
+% In Proceedings of the International Conference on the Science of 
+% Electrical Engineering (ICSEE). IEEE, 2018.
+%
+% input parameters:
+% x: input signal (1D array)
+% fs: sample rate
+% yin: structure containing yin data 
+% filename: for plotting purposes only, name of the audio file.
+% f0band: [f_low, f_high]: lowest and highest values of the frequency
+%          band containing the fundamental frequency. The default one is
+%           [1800, 3500], frequency band for Halcyon Smyrnensis
+%
+% output parameters:
+% detect: indicator array, i.e. containing 1s for samples contained in 
+%       syllables and 0s for samples outside of detected syllables.
+% segs: array containig timestamps for start and stop time of each syllable
+% env: envelope of the teo energy function
+% teo: the teo energy function of the signal
+
 
 if(nargin < 4)
     filename = [];
@@ -63,7 +86,7 @@ diptime = yin.time(locs)';
 %%
 
 
-%to delete:
+%for plotting purposes:
 olddiptime = diptime;
 %% Envelope Rejects
 localav = 0.012;
@@ -91,22 +114,6 @@ dipxxsamp = floor(diptime*fs);
 diptime = diptime(teo(dipxxsamp)>threshold_teo);
 
 
-
-% %% Detecting pulse interval
-% detect = zeros(size(x));
-% windur = 0.05;
-% low = prcfilt(teo , floor(windur*fs) , 30 , 'omitnan')+threshold_teo;
-% for i=1:length(diptime)
-%     istart = floor(diptime(i)*fs);
-%     iend = floor(diptime(i)*fs);
-%     while(istart>0 && teo(istart)>low(istart)) , istart = istart-1; end
-%     while(iend<length(x) && teo(iend)>low(iend)) , iend = iend+1; end
-%         
-%     detect(istart:iend) = 1;
-% end
-% 
-% segs = logical2segments(detect , fs);
-
 %% Segmentation
 energy = xx0.^2;
 periods = diptime(2:end) - diptime(1:end-1);
@@ -129,87 +136,87 @@ seglen = segs(2,:) - segs(1,:);
 segs = segs(: , seglen>lenthresh);
 detect = segments2logical(segs , t , fs);
 
-%%
-% plotting the stuff for ISCEE2018
-if(~isempty(filename))
-f = figure(1);
-f.Position = [300 , 800 , 560 , 180];
+% %%
+% % plotting for debugging or ISCEE2018
+% if(~isempty(filename))
+% f = figure(1);
+% f.Position = [300 , 800 , 560 , 180];
+% % p1 = subplot(3,1,1);
+% plot(t,xx0 , 'b' , t, detect , 'm');
+% % title(filename);
+% 
+% f = figure(2);
+% f.Position = [300 , 800 , 560 , 180];
+% plot(t , teo , 'b' , t , env , 'm' , t , 0.7*env , 'c');
+% % plot(t , teo , 'b');
+% hold on
+% % line([0 , t(end)] , threshold_teo*[1 , 1] , 'Color', 'g');
+% % plot(olddiptime , teo(floor(olddiptime*fs)) , 'dg')
+% % plot(diptime , teo(floor(diptime*fs)) , 'db')
+% % plot(envrejects , teo(floor(envrejects*fs)) , 'd', 'Color' , 'g')
+% % plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'd', 'Color' , 'b')en
+% plot(olddiptime , teo(floor(olddiptime*fs)) , '*r')
+% plot(diptime , teo(floor(diptime*fs)) , '*b')
+% plot(envrejects , teo(floor(envrejects*fs)) , 'o', 'Color' , 'r')
+% plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'o', 'Color' , 'b')
+% hold off
+% legend({'TEO Energy' , 'Energy Envelope' , '0.7 Energy Envelope','Original' , 'Accepted' ,'Original' , 'Rejected'});
+% % legend({'TEO Energy' , 'Original Dips' , 'Improved Peaks'});
+% title('Energy Function')
+% 
+% sqrinslopvar = sqrt(yinslopvar);
+% 
+% f = figure(3);
+% f.Position = [300 , 800 , 560 , 180];
+% plot(yin.time , sqrinslopvar  , 'b')
+% hold on
+% 
+% line([0 , yin.time(end)] , sqrt(vdf0_thresh)*[1 ,1] , 'Color', 'g');
+% plot(yin.time(locs) , sqrinslopvar(locs) , 'dg')
+% % plot(olddiptime , sqrinslopvar(floor(olddiptime*yin.steprate)) , '*r')
+% % plot(envrejects , sqrinslopvar(floor(envrejects*yin.steprate)) , 'o' ,'Color' ,'r')
+% hold off
+% legend('DV(t)' , 'DV Threshold' , 'detected points')
+% title('Fundamental Derivative Variance');
+% % linkaxes([p1,p2,p3] , 'x');
+% end
+% % plotting the stuff
+% if(~isempty(filename))
+% figure(1)
 % p1 = subplot(3,1,1);
-plot(t,xx0 , 'b' , t, detect , 'm');
+% plot(t,xx0 , 'b' , t, detect , 'm');
 % title(filename);
-
-f = figure(2);
-f.Position = [300 , 800 , 560 , 180];
-plot(t , teo , 'b' , t , env , 'm' , t , 0.7*env , 'c');
-% plot(t , teo , 'b');
-hold on
+% 
+% p2 = subplot(3,1,2);
+% plot(t , teo , 'b' , t , env , 'm' , t , 0.7*env , 'c');
+% % plot(t , teo , 'b');
+% hold on
 % line([0 , t(end)] , threshold_teo*[1 , 1] , 'Color', 'g');
-% plot(olddiptime , teo(floor(olddiptime*fs)) , 'dg')
-% plot(diptime , teo(floor(diptime*fs)) , 'db')
-% plot(envrejects , teo(floor(envrejects*fs)) , 'd', 'Color' , 'g')
-% plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'd', 'Color' , 'b')en
-plot(olddiptime , teo(floor(olddiptime*fs)) , '*r')
-plot(diptime , teo(floor(diptime*fs)) , '*b')
-plot(envrejects , teo(floor(envrejects*fs)) , 'o', 'Color' , 'r')
-plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'o', 'Color' , 'b')
-hold off
-legend({'TEO Energy' , 'Energy Envelope' , '0.7 Energy Envelope','Original' , 'Accepted' ,'Original' , 'Rejected'});
-% legend({'TEO Energy' , 'Original Dips' , 'Improved Peaks'});
-title('Energy Function')
-
-sqrinslopvar = sqrt(yinslopvar);
-
-f = figure(3);
-f.Position = [300 , 800 , 560 , 180];
-plot(yin.time , sqrinslopvar  , 'b')
-hold on
-
-line([0 , yin.time(end)] , sqrt(vdf0_thresh)*[1 ,1] , 'Color', 'g');
-plot(yin.time(locs) , sqrinslopvar(locs) , 'dg')
-% plot(olddiptime , sqrinslopvar(floor(olddiptime*yin.steprate)) , '*r')
-% plot(envrejects , sqrinslopvar(floor(envrejects*yin.steprate)) , 'o' ,'Color' ,'r')
-hold off
-legend('DV(t)' , 'DV Threshold' , 'detected points')
-title('Fundamental Derivative Variance');
+% % plot(olddiptime , teo(floor(olddiptime*fs)) , 'dg')
+% % plot(diptime , teo(floor(diptime*fs)) , 'db')
+% % plot(envrejects , teo(floor(envrejects*fs)) , 'd', 'Color' , 'g')
+% % plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'd', 'Color' , 'b')
+% plot(olddiptime , teo(floor(olddiptime*fs)) , '*r')
+% plot(diptime , teo(floor(diptime*fs)) , '*b')
+% plot(envrejects , teo(floor(envrejects*fs)) , 'o', 'Color' , 'r')
+% plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'o', 'Color' , 'b')
+% hold off
+% legend({'TEO Energy' , 'Threshold TEO' , 'Energy Envelope' , '0.7 Energy Envelope','Original' , 'Accepted' ,'Original' , 'Rejected'});
+% % legend({'TEO Energy' , 'Original Dips' , 'Improved Peaks'});
+% title('Energy Function')
+% 
+% sqrinslopvar = sqrt(yinslopvar);
+% 
+% p3 = subplot(3,1,3);
+% plot(yin.time , sqrinslopvar  , 'b')
+% hold on
+% 
+% line([0 , yin.time(end)] ,sqrt(vdf0_thresh)*[1 ,1] , 'Color', 'g');
+% plot(yin.time(locs) , sqrinslopvar(locs) , 'dg')
+% % plot(olddiptime , sqrinslopvar(floor(olddiptime*yin.steprate)) , '*r')
+% % plot(envrejects , sqrinslopvar(floor(envrejects*yin.steprate)) , 'o' ,'Color' ,'r')
+% hold off
+% legend('DV(t)' , 'DV Threshold' , 'detected points')
+% title('Fundamental Derivative Variance');
 % linkaxes([p1,p2,p3] , 'x');
-end
-% plotting the stuff
-if(~isempty(filename))
-figure(1)
-p1 = subplot(3,1,1);
-plot(t,xx0 , 'b' , t, detect , 'm');
-title(filename);
-
-p2 = subplot(3,1,2);
-plot(t , teo , 'b' , t , env , 'm' , t , 0.7*env , 'c');
-% plot(t , teo , 'b');
-hold on
-line([0 , t(end)] , threshold_teo*[1 , 1] , 'Color', 'g');
-% plot(olddiptime , teo(floor(olddiptime*fs)) , 'dg')
-% plot(diptime , teo(floor(diptime*fs)) , 'db')
-% plot(envrejects , teo(floor(envrejects*fs)) , 'd', 'Color' , 'g')
-% plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'd', 'Color' , 'b')
-plot(olddiptime , teo(floor(olddiptime*fs)) , '*r')
-plot(diptime , teo(floor(diptime*fs)) , '*b')
-plot(envrejects , teo(floor(envrejects*fs)) , 'o', 'Color' , 'r')
-plot(newenvrejects , teo(floor(newenvrejects*fs)) , 'o', 'Color' , 'b')
-hold off
-legend({'TEO Energy' , 'Threshold TEO' , 'Energy Envelope' , '0.7 Energy Envelope','Original' , 'Accepted' ,'Original' , 'Rejected'});
-% legend({'TEO Energy' , 'Original Dips' , 'Improved Peaks'});
-title('Energy Function')
-
-sqrinslopvar = sqrt(yinslopvar);
-
-p3 = subplot(3,1,3);
-plot(yin.time , sqrinslopvar  , 'b')
-hold on
-
-line([0 , yin.time(end)] ,sqrt(vdf0_thresh)*[1 ,1] , 'Color', 'g');
-plot(yin.time(locs) , sqrinslopvar(locs) , 'dg')
-% plot(olddiptime , sqrinslopvar(floor(olddiptime*yin.steprate)) , '*r')
-% plot(envrejects , sqrinslopvar(floor(envrejects*yin.steprate)) , 'o' ,'Color' ,'r')
-hold off
-legend('DV(t)' , 'DV Threshold' , 'detected points')
-title('Fundamental Derivative Variance');
-linkaxes([p1,p2,p3] , 'x');
-end
+% end

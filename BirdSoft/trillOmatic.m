@@ -73,7 +73,7 @@ handles.global_filter_gui_values = [0, fs/2];
 guidata(hObject, handles);
 
 % xlim_binder( [handles.axes_time , handles.axes_spect] );
-linkaxes( [handles.axes_time , handles.axes_spect , handles.axes_test] , 'x');
+linkaxes( [handles.axes_time , handles.axes_spect , handles.axes_teo] , 'x');
 
 set(handles.uitoolbar1.Children , 'State' , 'off');
 
@@ -196,7 +196,7 @@ handles.axes_spect.ButtonDownFcn = @axes_spect_ButtonDownFcn;
 function plot_TEO(handles)
 teo = handles.teo;
 
-plot(handles.axes_test ,handles.time ,  teo);
+plot(handles.axes_teo ,handles.time ,  teo);
 
 function spect = plot_spectrogram(handles)
     p = handles.spect_params;
@@ -948,7 +948,6 @@ function pushbutton_ymfa_Callback(hObject, eventdata, handles)
 [trill_f0band , tpeaks] = area_of_interest4( [] , false , handles.xx , handles.fs);
 trill_f0band
 [detect , segs , env , smoothteo] = longtrill_syllable_detection41(handles.xx , handles.fs , handles.yin, [], trill_f0band);
-% [detect , segs , env , smoothteo] = longtrill_syllable_detection3(handles.xx , handles.fs , handles.yin , handles.harmonics , handles.harmenergy, handles.axes_time);
 handles.trillsegs = segs;
 handles.trillenv = env;
 handles.teo = smoothteo;
