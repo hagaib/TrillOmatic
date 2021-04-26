@@ -129,18 +129,6 @@ for i=1:length(h)
     set(h(i) , 'HitTest' , 'off');
 end
 
-% function [ f0 , dips , time ] = yin_wrapper(xx , fs)
-% windur = 0.0015; % around 2.7 pitch periods (1/2000)
-% stepdur = 0.001;
-% min_freq = 1800;
-% 
-% b = fir1(56 , 0.1 , 'high');
-% delay = mean(grpdelay(b,1));
-% xx_foryin = filter(b, 1 , xx);
-% xx_foryin = [xx_foryin(delay+1:end) ; zeros(delay , 1)];
-% [ f0 , dips , time ] = yin3(xx_foryin, fs , windur , 0.1 , min_freq, floor(stepdur*fs));
-
-
 
 function SNR = SNR_estimation(xx , fs , time , yin)
 
@@ -259,7 +247,7 @@ end
 % xx = resample(xx , 44.1*10^3, fs); fs = 44.1*10^3; 
 xx = xx(:,1);
 handles.fs = fs;
-handles.xx_raw = xx
+handles.xx_raw = xx;
 handles.xx = xx;
 handles.time = ((0:(length(xx)-1))/fs)';
 handles.filename = filename;
@@ -323,6 +311,7 @@ catch
 end
 
 function plot_benchmark_indicators(handles)
+% plots the benchmarks annotated by Dana as part of her work
 segments = handles.benchmarksegs;
 N = size(segments,2);
 time_max = handles.time_indicator_height;
@@ -442,10 +431,6 @@ for i = 1:N
         end
     end
 end
-
-function cancel_drag(time_indicators , spect_indicators)
-draggable([time_indicators{:}] , 'off');
-draggable([spect_indicators{:}] , 'off');
     
 
 function move_twin(h)
@@ -467,7 +452,6 @@ else
     handles = update_segs_from_indicators(handles);
     guidata(axhandle , handles);
 end
-% cancel_drag(handles.t_indicators , handles.s_indicators);
 make_indicators_draggable(handles.t_indicators , handles.s_indicators , handles.trillsegs , axhandle);
 
 
@@ -588,9 +572,6 @@ handles = plot_axes(handles);
 handles = gather_harmonic_info(handles);
 handles = delete_yinhandles(handles);
 handles.yinhandles = plot_harmonic_content(handles.axes_spect , handles.yin , handles.harmonics);
-% xxsynth = harmonic_plus_noise_bird(handles.xx , handles.fs ,0.001 , 0.0005  , 1800 , 0.001 , handles.yin); 
-% xxsynth = add_noise_to_signal(xxsynth , 40);
-% handles.xxsynth = xxsynth;
 
 set(handles.checkbox_toggle_yin , 'Value' , 1)
 
@@ -721,121 +702,6 @@ if(isequal(button , 'Yes'))
 end
 
 
-% --- Executes on button press in pushbutton_harmonics_filter.
-function pushbutton_harmonics_filter_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_harmonics_filter (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-filename = handles.filenames{handles.listbox_filenames.Value};
-if(isfield(handles , 'harmonics_filter_handle'))
-    if(isvalid(handles.harmonics_filter_handle))
-        close(handles.harmonics_filter_handle);
-    end
-    handles = rmfield(handles , 'harmonics_filter_handle');
-end
-% [h , segments , info] = harmonics_filter(handles.xx , handles.fs , filename , handles.yin , handles.harmonics);
-% handles.harmonics_filter_handle = h;
-[detect , segs , info] = longtrill_syllable_detection(handles.xx , handles.fs , handles.yin , handles.harmonics , handles.axes_time);
-handles.info = info;
-[time_indicators , spect_indicators , handles] = ...
-    plot_segment_indicators([handles.axes_time , handles.axes_spect] , segs , handles.time_indicator_height , handles);
-guidata(hObject , handles);  
-
-
-
-% --- Executes on button press in pushbutton_segment1.
-function pushbutton_segment1_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_segment1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% info = handles.info;
-% energy_envelope(info.energy , info.fs , info.time,  info.highthresh , handles.axes_time);
-[detect , segs , env] = longtrill_syllable_detection2(handles.xx , handles.fs , handles.yin , handles.harmonics , handles.harmenergy, handles.axes_time);
-handles.trillsegs = segs;
-handles.trillenv = env;
-
-[time_indicators , spect_indicators , handles] = ...
-    plot_segment_indicators([handles.axes_time , handles.axes_spect] , segs , handles.time_indicator_height , handles);
-
-guidata(hObject , handles);
-
-assignin('base' , 'handles' , handles);
-
-
-
-% --- Executes on button press in pushbutton_segmentTEO.
-function pushbutton_segmentTEO_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_segmentTEO (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-[detect , segs , env , smoothteo] = longtrill_syllable_detection4(handles.xx , handles.fs , handles.yin);
-% [detect , segs , env , smoothteo] = longtrill_syllable_detection3(handles.xx , handles.fs , handles.yin , handles.harmonics , handles.harmenergy, handles.axes_time);
-handles.trillsegs = segs;
-handles.trillenv = env;
-handles.teo = smoothteo;
-
-[time_indicators , spect_indicators , handles] = ...
-    plot_segment_indicators([handles.axes_time , handles.axes_spect] , segs , handles.time_indicator_height , handles);
-
-plot_TEO(handles);
-
-guidata(hObject , handles);
-
-assignin('base' , 'handles' , handles);
-
-% --- Executes on button press in pushbutton_yin.
-function pushbutton_yin_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_yin (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-handles = gather_harmonic_info (handles);
-handles = delete_yinhandles(handles);
-handles.yinhandles = plot_harmonic_content(handles.axes_spect ,handles.yin , handles.harmonics);
-set(handles.checkbox_toggle_yin , 'Value' , 1);
-% Update handles structure
-guidata(hObject, handles);
-
-% --- Executes on button press in pushbutton_interval.
-function pushbutton_interval_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_interval (see GCBO)s
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-[meanprob , badprecent] = mean_yinprobs_trill(handles.yin);
-set(handles.text_prob , 'String' , ['meanprob:' , num2str(meanprob) , ' badprecent:' , num2str(badprecent)]);
-
-
-% --- Executes on button press in pushbutton_synthvad.
-function pushbutton_synthvad_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_synthvad (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-filename = handles.filenames{handles.listbox_filenames.Value};
-if(isfield(handles , 'harmonics_filter_handle'))
-    if(isvalid(handles.harmonics_filter_handle))
-        close(handles.harmonics_filter_handle);
-    end
-    handles = rmfield(handles , 'harmonics_filter_handle');
-end
-[h , segments] = harmonics_filter(handles.xxsynth , handles.fs , filename , handles.yin , handles.harmonics);
-handles.harmonics_filter_handle = h;
-plot_segment_indicators(handles.axes_spect , segments);
-guidata(hObject , handles);  
-
-
-% --- Executes on button press in pushbutton_soundsynth.
-function pushbutton_soundsynth_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_soundsynth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-xlim = handles.axes_time.XLim;
-player = playsound(handles.xxsynth , handles.fs , xlim);
-handles.player = player;
-guidata(hObject , handles);
-
-
 % --- Executes on button press in checkbox_toggle_yin.
 function checkbox_toggle_yin_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_toggle_yin (see GCBO)
@@ -905,8 +771,6 @@ if(isfield(handles , 'hxx'))
 end
 
 
-
-
 function handles = delete_yinhandles(handles)
 if(isfield(handles, 'yinhandles'))
     for i=1:length(handles.yinhandles)
@@ -934,7 +798,7 @@ guidata(hObject , handles);
 
 
 %%
-%Toolbar Methods
+%% Toolbar Methods
 %
 %%
 % --------------------------------------------------------------------
@@ -978,50 +842,6 @@ if(isequal(hObject.State ,'on'))
 else
     pan off
 end
-
-
-% --------------------------------------------------------------------
-function uitoggletool_newind_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to uitoggletool_newind (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-untoggle_all(hObject, handles);
-disp(['click new ' , hObject.State])
-
-% --------------------------------------------------------------------
-function uitoggletool_dragind_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to uitoggletool_dragind (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-untoggle_all(hObject, handles);
-
-% --------------------------------------------------------------------
-function uitoggletool_dragind_OffCallback(hObject, eventdata, handles)
-% hObject    handle to uitoggletool_dragind (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-disp(['click drag ' , hObject.State])
-if isfield(handles, 't_indicators') && ~isempty(handles.t_indicators)
-    cancel_drag(handles.t_indicators , handles.s_indicators);
-end
-
-% --------------------------------------------------------------------
-function uitoggletool_dragind_OnCallback(hObject, eventdata, handles)
-% hObject    handle to uitoggletool_dragind (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-disp(['click drag ' , hObject.State])
-if isfield(handles, 't_indicators') && ~isempty(handles.t_indicators)
-    make_indicators_draggable(handles.t_indicators , handles.s_indicators , handles.trillsegs , handles.axes_time);
-end
-
-% --------------------------------------------------------------------
-function uitoggletool_delind_ClickedCallback(hObject, eventdata, handles)
-% hObject    handle to uitoggletool_delind (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-untoggle_all(hObject, handles);
-
 
  
 function untoggle_all(hObject , handles)
@@ -1118,7 +938,7 @@ if(isfield(handles , 't_indicators'))
     end
 end
 
-
+%% Automatic Segmentation algorithms
 % --- Executes on button press in pushbutton_ymfa.
 function pushbutton_ymfa_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_ymfa (see GCBO)
@@ -1163,6 +983,7 @@ plot_TEO(handles);
 guidata(hObject , handles);
 
 
+%% band width filters
 
 function bw_high_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to bw_high_edit (see GCBO)
@@ -1184,7 +1005,6 @@ function bw_high_edit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 
 function bw_low_edit_Callback(hObject, eventdata, handles)
@@ -1228,6 +1048,10 @@ else
     handles.xx = handles.xx_raw;
 end
 guidata(hObject, handles);
+yin_toggle_value = get(handles.checkbox_toggle_yin , 'Value');
+if yin_toggle_value
+    pushbutton_yin_Callback(hObject, eventdata, handles);
+end
 plot_axes(handles);
 
 
