@@ -36,43 +36,6 @@ figure(11)
 plot(filtenv)
 end
 
-% %% acquisition
-% if(isplot)
-% figure(10)
-% plot(env);
-% end
-% corrvals = zeros(maxper - minper + 1, 1);
-% 
-% for per=minper:maxper
-%     halfper = floor(per/2);
-%     interval1 = peakloc + ( (-halfper):halfper );
-%     interval2 = interval1(end) + ( 1:length(interval1) ) ;
-%     if(interval2(end) > length(env))
-%         corrvals = corrvals(1:per - minper);
-%         break;
-%     end
-%     corrvals(per - minper + 1) = env(interval1)' * env(interval2) / ( norm(env(interval1)) * norm(env(interval2)));
-% end
-% 
-% % figure(12)
-% % findpeaks(corrvals)
-% try
-% [c , t] = findpeaks(corrvals , 'SortStr','descend');
-% catch
-%     fprintf('yo mama\n');
-% end
-% 
-% if(length(t)<1)
-%     [ periods , peaklocs , correlations ] = deal([],[],[]);
-%     return;
-% end
-% initper = t(1) + minper;
-% 
-% halfper = floor(initper/2);
-% interval1 = peakloc + ( (-halfper):halfper );
-% interval2 = interval1(end) + ( 1:length(interval1) ) ;
-% c2 = env(interval1)' * env(interval2);
-
 initper = [];
 c = [];
 c2 = [];
