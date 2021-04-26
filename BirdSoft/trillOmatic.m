@@ -946,6 +946,7 @@ function pushbutton_ymfa_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [trill_f0band , tpeaks] = area_of_interest4( [] , false , handles.xx , handles.fs);
+trill_f0band
 [detect , segs , env , smoothteo] = longtrill_syllable_detection41(handles.xx , handles.fs , handles.yin, [], trill_f0band);
 % [detect , segs , env , smoothteo] = longtrill_syllable_detection3(handles.xx , handles.fs , handles.yin , handles.harmonics , handles.harmenergy, handles.axes_time);
 handles.trillsegs = segs;

@@ -156,7 +156,7 @@ while(peaklocs(end) + ceil(1.5*mmaxper) < length(env) )
     while(t(i) < tdips(1)) , i = i+1; end
     tpeak = t(min(i ,length(t)));
     catch
-        fprintf('Hey what''s going on here??\n');
+        fprintf('env_xcorr3.subfunc_env_xcorr: Finished going over all peaks\n');
     end
     
     if(isempty(t))

@@ -1,5 +1,5 @@
 function [result_band , tpeaks] = area_of_interest4( audiofilename , isplot , x , fs)
-%GET_AOA GEt Area of Interest of imput track 'audiofilename'
+%GET_AOA Get Area of Interest of imput track 'audiofilename'
 % freqband = is a 2x1 array with low and high frequencies in band
 % This version has envelope cross correlation implemented
 
@@ -365,7 +365,7 @@ for i=1:band_count
 
 %     [periods , peaklocs] = env_xcorr2(x , fs, time, xteo(:,i) , 10^-1, isplot);
     %use economic version: 
-    [periods , peaklocs] = env_xcorr2(x , economic_samplerate, time(1:subsample_factor:end), xteo_subsampled(:,i) , 10^-1, isplot);
+    [periods , peaklocs] = env_xcorr3(x , economic_samplerate, time(1:subsample_factor:end), xteo_subsampled(:,i) , 10^-1, isplot);
     peakloc_bands{i} = peaklocs;
     peaklocs = floor(peaklocs*economic_samplerate);
     p = 40; phigh = 5;
