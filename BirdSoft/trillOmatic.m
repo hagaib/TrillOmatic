@@ -712,7 +712,7 @@ function checkbox_toggle_yin_Callback(hObject, eventdata, handles)
 value = get(hObject,'Value');
 
 if(~isfield(handles , 'yinhandles'))
-    pushbutton_yin_Callback(hObject, eventdata, handles);
+    calculate_yin(hObject, handles)
 else
     h = handles.yinhandles;
     for i=1:length(h)
@@ -723,6 +723,15 @@ else
         end
     end
 end
+
+
+function calculate_yin(hObject, handles)
+handles = gather_harmonic_info (handles);
+handles = delete_yinhandles(handles);
+handles.yinhandles = plot_harmonic_content(handles.axes_spect ,handles.yin , handles.harmonics);
+set(handles.checkbox_toggle_yin , 'Value' , 1);
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes on button press in pushbutton_reset_plot.
@@ -1050,7 +1059,7 @@ end
 guidata(hObject, handles);
 yin_toggle_value = get(handles.checkbox_toggle_yin , 'Value');
 if yin_toggle_value
-    pushbutton_yin_Callback(hObject, eventdata, handles);
+    calculate_yin(hObject, eventdata, handles);
 end
 plot_axes(handles);
 
