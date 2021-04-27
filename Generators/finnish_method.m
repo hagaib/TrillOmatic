@@ -1,5 +1,7 @@
 function [y , yindata] = finnish_method(x, fs , max_dur , yindata)
 %FINNISH_METHOD Fixes track x with missing data using the finnish method.
+% after "Reconstruction Method for Missing or Damaged Long Portions in 
+% Audio Signal" by ISMO KAUPPINEN AND JYRKI KAUPPINEN
 % max_length is the maximal interval length to fix (in seconds)
 
 if(nargin < 3) , max_dur = 5 * 10^3; end % 2 ms
