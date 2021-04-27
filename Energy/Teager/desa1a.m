@@ -1,4 +1,6 @@
 function [amp , ff] = desa1a(x , fs)
+% numberical computation of amplitude and frequency using TEO
+% using backward difference
 
 dx = x(2:end) - x(1:end-1);
 

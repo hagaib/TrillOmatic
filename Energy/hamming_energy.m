@@ -1,5 +1,5 @@
 function energy = hamming_energy(xx , fs ,  windur , step)
-%calculates energy of hamming window
+%calculates short time energy using a hamming window of input signal
 %example:
 %hamming_energy(weighted_bands, fs ,  0.01 , 1);
 energy = zeros(size(xx));

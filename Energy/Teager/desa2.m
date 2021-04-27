@@ -1,4 +1,6 @@
 function [amp , ff] = desa2(x , fs)
+% numberical computation of amplitude and frequency using TEO
+%using central difference 
 
 dx = x(3:end) - x(1:end-2);
 
