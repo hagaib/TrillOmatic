@@ -95,6 +95,12 @@ envrejects = zeros(size(diptime));
 newenvrejects = zeros(size(diptime));
 for i=1:length(diptime)
     dipsample = find(t>diptime(i) , 1);
+    if dipsample < L
+        newenvrejects(i) = (dipsample-L)/fs;
+        envrejects(i) = diptime(i);
+        diptime(i) = -1;
+        continue
+    end
     [maxte , imax] = max(teo(dipsample+(-L:L)));
 %     meante = mean(teo(dipsamp+(-L:L)));
     if( maxte < env(dipsample)*0.7 )
