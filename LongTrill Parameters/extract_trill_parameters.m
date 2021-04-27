@@ -4,26 +4,9 @@ function params = extract_trill_parameters(xx , fs , yin , syllable_timestamps ,
 % fs = sample rate
 % f0 = fundamental frequency information
 % times = trame time info
+%
+% returns structure of desired parameters
 
-% hpfilt = designfilt('highpassiir','FilterOrder',30, ...
-%          'PassbandFrequency',fs/85,'PassbandRipple',0.3, ...
-%          'SampleRate',fs);
-% lpfilt = fir1(60, 300/(fs/2));
-% envelope = filter(hpfilt , xx);
-% envelope = abs(hilbert(envelope));
-% envelope = filter(lpfilt,1,envelope);
-% delay = mean(grpdelay(lpfilt));
-% envelope = [envelope(delay+1:end) ; zeros(delay,1)];
-
-% is_voiced = medfilt1(double(~isnan(yin.f0)));
-% 
-% params.is_voiced = is_voiced;
-% 
-% syllable_frames = is_voiced(2:end) - is_voiced(1:end-1);
-% syllable_frames = find(syllable_frames ~= 0);
-% syllable_frames = reshape(syllable_frames, [2 , length(syllable_frames)/2]);
-% syllable_frames(1,:) = syllable_frames(1,:)+1;
-% syllable_timestamps = yin.time(syllable_frames);
 
 if(isempty(syllable_timestamps) || sum(sum(isnan(syllable_timestamps)))) ,...
         params = nan; return; end
