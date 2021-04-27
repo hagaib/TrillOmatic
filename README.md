@@ -1,12 +1,24 @@
 # TrillOMatic
-This is a matlab implementation of the trillOmatic: 
-a software for automatic segmentation and analysis of bird song trills
+A matlab implementation a software for automatic segmentation and analysis of bird song trills.
+It is based on work done by Prof. Yizhar Lavner, Prof. Sivan Toledo, Prof. Yoni Vortman, Dana Klein, and Hagai Barmatz as part of a collaborative bioacoustic research
+between Tel-Aviv University and Tel-Hai College, Israel
 
 ![image](https://user-images.githubusercontent.com/895574/116317931-b2c6df00-a7bc-11eb-934c-3fe6d29bb156.png)
 
+## Publications
+* 	H. Barmatz, D. Klein, Y. Vortman, S. Toledo, and Y. Lavner.
+A method for automatic segmentation and parameter estimation of bird vocalizations.
+In Proceedings of the International Conference on Systems, Signals and Image Processing (IWSSIP), pages 211-216, 2019. 
+* 	Hagai Barmatz, Dana Klein, Yoni Vortman, Sivan Toledo, and Yizhar Lavner.
+Segmentation and analysis of bird trill vocalizations.
+In Proceedings of the International Conference on the Science of Electrical Engineering (ICSEE). IEEE, 2018. 
+
+## Prerequisutes
+A standard Matlab installation, together with the signal processing toolbox.
+
 ## Running the trillOmatic
 first, run the matlab script `addpath_birds.m`. This will automatically add all relevant files 
-to the system path. Afterwards, type `trillOmatic` to start.
+to the system path. Afterwards, type `trillOmatic` at the matlab prompt to start the trillOmatic.
 
 ## Working with the trillOmatic
 
@@ -24,9 +36,10 @@ its spectrogram, and the top window shows its Teager energy.
 
 ### Segmentation Algorithms
 
-There are two automatic segmentation algorithms the trillOmatic currently offers:
+There are two fully automatic segmentation algorithms the trillOmatic currently offers:
 * FVDNEM
 * SACATS
+
 They are fully described in the following MSc thesis: 
 https://www.tau.ac.il/~stoledo/Theses/Hagai_Master_Thesis_4_0.pdf
 
@@ -36,20 +49,20 @@ https://www.tau.ac.il/~stoledo/Theses/Hagai_Master_Thesis_4_0.pdf
 In some cases, the user may want to refine the automatic segmentation produced by the algorithm.
 This can be done by simply interacting with the waveform window.
 
-#### Adding a New Syllable
+#### Adding a New Segmentation
 By simply clicking on the waveform window, where no segmentation is present, a new pair of 
 segmentation indicators will be introduced.
-#### Deleting an Existing Syllable
+#### Deleting an Existing Segmentation
 By clicking on one of the indicators of an existing syllable, a dialog will be presented, asking 
 to confirm deleting the segmentation.
-#### Editing a Segmentation
+#### Editing an Existing Segmentation
 By clicking on a segmentation indicator and dragging it, the segmentation can be manually adjusted.
 
 ### Estimating Parameters
 By clicking on the `Export Data` push button, a table with parameters of interest will be presented.
 Exporting the information to an `.xlsx` file for further analysis is also possible.
 
-The following parameters are calculated for the whole trill:
+The following parameters are calculated:
 * Syllable Count
 * Trill Duration
 * Syllable Rate
@@ -67,14 +80,14 @@ The following parameters are calculated for the whole trill:
 * Min Band
 * f0 Start Max
 * f0 End Max
-* Delta Max,
+* Delta Max
 * Max Slope
 * f0 Start Min
 * f0 End Min
 * Delta Min
 * Min Slope
 
-In addition, for each segmented syllable, the following parameters are presented:
+In addition, the following parameters are calculated for each segmented syllable:
 * Start time
 * End Time
 * Max f0
@@ -93,6 +106,9 @@ with coherent automatic segmentation, noise can be filtered out using a band pas
 Set the appropriate high and low frequencies (in kHz) and check the `BP Filter` checkbox. After 
 the signal is filtered to your satisfaction, run the segmentation algorithms and obtain the new 
 segmentation.
+
+![image](https://user-images.githubusercontent.com/895574/116320813-9c6f5200-a7c1-11eb-8af2-9a6faab142ec.png)
+
 
 ### Spectrogram Options
 Spectrogram paramters such as window type and size can be adjusted in the dialog that opens by 
