@@ -3,6 +3,12 @@ function bb = baseline(xx , fs , dur , freq_cutoff , filter_type)
 % dur is length of window on which analysis is preformed.
 % freqcutoff is the maximal frequency in the baseline. (all frequeny
 % components above freqcutoff are zeroed out).
+% filter type is one of: ['fourier', 'fir1', 'median'] 
+%   'fourier': zeros out high frequency coefficients.
+%   'fir1': uses a low pass FIR filter. 
+%   'median': uses a median filter
+%
+% output: baseline of input signal
 
     
     winlen = floor(dur * fs);
