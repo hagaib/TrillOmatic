@@ -1,4 +1,13 @@
-function y = prctile(v, p)
+function y = prctile(x, k)
 % percentile p of data points v
-pctl = @(v,p) interp1(linspace(0.5/length(v), 1-0.5/length(v), length(v))', sort(v), p*0.01, 'spline');
-y = pctl(v, p);
+x = sort(x);
+n = size(x,1);
+
+p = 1 + (n-1) * k / 100;
+
+if p == fix(p)
+    y = x(p);
+else
+    r1 = floor(p); r2 = r1+1;
+    y = x(r1) + (x(r2)-x(r1)) * k / 100;
+end

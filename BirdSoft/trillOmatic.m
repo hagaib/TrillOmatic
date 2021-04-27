@@ -100,14 +100,14 @@ function handles = gather_harmonic_info (handles)
 xx = handles.xx;
 fs = handles.fs;
 timexx = handles.time;
+trill_f0band = handles.trill_f0band;
 
 if(~isfield(handles , 'yin'))
-    yin = yin_wrapper(xx , fs);
+    yin = yin_wrapper(xx , fs, 0.001, trill_f0band(1));
     handles.yin = yin;
 else
     yin = handles.yin;
 end
-
 [harmonics , energies]= harmonics_of_signal(xx , fs , yin , 2);
 SNR = SNR_estimation(xx , fs , timexx , yin);
 disp(['SNR =' , num2str(SNR)]);
@@ -234,8 +234,6 @@ function spect = plot_spectrogram(handles)
     end
     
 
-
-
 function handles = load_new_file(hObject, handles , filename)
 %load a new sound file and save it in handles object
 fullname = filename;
@@ -246,15 +244,30 @@ end
 [xx , fs] = audioread(fullname);
 % xx = resample(xx , 44.1*10^3, fs); fs = 44.1*10^3; 
 xx = xx(:,1);
+[trill_f0band , tpeaks] = area_of_interest4( [] , false , xx , fs);
+xx0 = filter_signal(xx, fs, trill_f0band(1), trill_f0band(2));
+[~ , threshold_teo , teo] = trilltime_TEO(xx0 , fs);
+
 handles.fs = fs;
 handles.xx_raw = xx;
 handles.xx = xx;
 handles.time = ((0:(length(xx)-1))/fs)';
 handles.filename = filename;
 handles.text_filename.String = filename;
-handles.bb = baseline(xx , fs , [] , 1500 , 'fir1'); 
+handles.bb = baseline(xx , fs , [] , trill_f0band(1) , 'fir1'); 
+handles.trill_f0band = trill_f0band;
+handles.teo = teo;
 
 
+function handles = recalculate_f0band_and_baseline_and_teo(handles)
+xx = handles.xx
+fs = handles.fs
+[trill_f0band , tpeaks] = area_of_interest4( [] , false , xx , fs);
+xx0 = filter_signal(xx, fs, trill_f0band(1), trill_f0band(2));
+[~ , threshold_teo , teo] = trilltime_TEO(xx0 , fs);
+handles.bb = baseline(xx , fs , [] , trill_f0band(1) , 'fir1'); 
+handles.trill_f0band = trill_f0band;
+handles.teo = teo;
 
 
 % --- Executes on selection change in listbox_filenames.
@@ -566,14 +579,13 @@ function pushbutton_go_Callback(hObject, eventdata, handles)
 handles = clear_prev_file_data(handles);
 filename = handles.filenames{handles.listbox_filenames.Value};
 handles = load_new_file(hObject , handles , filename);
-handles.teo = zeros(size(handles.time));
+handles = gather_harmonic_info(handles);
 handles = plot_axes(handles);
 
-handles = gather_harmonic_info(handles);
 handles = delete_yinhandles(handles);
 handles.yinhandles = plot_harmonic_content(handles.axes_spect , handles.yin , handles.harmonics);
-
 set(handles.checkbox_toggle_yin , 'Value' , 1)
+handles = reset_bandpass_filter_gui(handles);
 
 handles.time_indicator_height = max(abs(handles.xx - handles.bb));
 % Update handles structure
@@ -581,6 +593,12 @@ guidata(hObject, handles);
 
 assignin('base' , 'handles' , handles);
 
+
+function handles = reset_bandpass_filter_gui(handles)
+set(handles.bp_filter_checkbox , 'Value' , 0);
+set(handles.bw_low_edit , 'String' , 0);
+set(handles.bw_high_edit , 'String' , 20);
+handles.bp_filter_on = 0;
 
 % --- Executes on button press in pushbutton_openfile.
 function pushbutton_openfile_Callback(hObject, eventdata, handles)
@@ -598,7 +616,6 @@ end
 handles.path = path;
 handles = clear_prev_file_data(handles);
 handles = load_new_file(hObject , handles , {path , filename});
-handles.teo = zeros(size(handles.time));
 handles = plot_axes(handles);
 
 handles = gather_harmonic_info(handles);
@@ -607,6 +624,7 @@ handles.yinhandles = plot_harmonic_content(handles.axes_spect , handles.yin , ha
 
 
 set(handles.checkbox_toggle_yin , 'Value' , 1)
+handles = reset_bandpass_filter_gui(handles);
 
 handles.time_indicator_height = max(abs(handles.xx - handles.bb));
 
@@ -1056,31 +1074,17 @@ if is_on
 else
     handles.xx = handles.xx_raw;
 end
+handles = recalculate_f0band_and_baseline_and_teo(handles)
+handles = plot_axes(handles);
 guidata(hObject, handles);
 yin_toggle_value = get(handles.checkbox_toggle_yin , 'Value');
 if yin_toggle_value
-    calculate_yin(hObject, eventdata, handles);
-end
-plot_axes(handles);
-
-
-function xxfilt = filter_signal(xx , fs , flow , fhigh)
-%filtering the signal to desired spectrum band
-if flow == 0
-    if fhigh == fs/2; return; end
-    % lowpass
-    n = cheb2ord(fhigh/fs*2 , fhigh*1.02/fs*2 , 0.5 , 40);
-    [z,p,k] = cheby2(n , 40, fhigh/fs*2 , 'low');
-elseif fhigh >= fs/2
-    % highpass
-    n = cheb2ord(flow/fs*2 , flow*0.98/fs*2 , 0.5 , 40);
-    [z,p,k] = cheby2(n , 40, flow/fs*2 , 'high');
+    calculate_yin(hObject, handles);
 else
-    n = cheb2ord([flow, fhigh]/fs*2 , [flow*0.98 , fhigh*1.02]/fs*2 , 0.5 , 40);
-    [z,p,k] = cheby2(n , 40, [flow , fhigh]/fs*2 , 'bandpass');
+    handles = delete_yinhandles(handles);
+    guidata(hObject , handles);
 end
-sos = zp2sos(z,p,k);
-xxfilt = sosfilt(sos , xx);
-
-    
-   
+% handles = gather_harmonic_info(handles);
+% handles = plot_axes(handles);
+% handles = delete_yinhandles(handles);
+% handles.yinhandles = plot_harmonic_content(handles.axes_spect , handles.yin , handles.harmonics);

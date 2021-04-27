@@ -40,7 +40,7 @@ n = cheb2ord(f0band/fs*2 , [f0band(1)*0.95 , f0band(2)*1.05]/fs*2 , 0.5 , 40);
 [z,p,k] = cheby2(n , 40, f0band/fs*2 , 'bandpass');
 sos = zp2sos(z,p,k);
 xx0 = sosfilt(sos , x);
-
+% xx0 = filter_signal(x, fs, f0band(1), f0band(2));
 [~ , threshold_teo , teo] = trilltime_TEO(xx0 , fs);
 
 %% Envelope Calculation
@@ -58,7 +58,7 @@ wint = PRI*0.2; % alittle less than half! %wint = 0.02;
 threshold_std = 1000;
 yinslopvar = yinslopevarfilt(yin , wint);
 
-L = floor(yin.steprate*0.02);
+L = floor(yin.steprate*0.002);
 if(mod(L,2)==0) , L=L+1; end
 g = gausswin(L);
 g = g/sum(g);
