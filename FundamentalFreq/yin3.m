@@ -1,6 +1,23 @@
 function [ f0 , dips , time ] = yin3(signal , fs , windur , threshold , minfreq, stepsize)
-%Approximates fundamental frequency of signal according to the celebreated
-%YIN algorithm
+% Implemetation of the YIN algorithm for fundamental frequency estimation
+% For more info refer to the following paper:
+% A.  De  Cheveign ́e  and  H.  Kawahara,  “Yin,  a  fundamental  frequency  
+% estimator  forspeech and music,”The Journal of the Acoustical Society of 
+% America, vol. 111, no. 4,pp. 1917–1930, 2002
+%
+% inputs:
+% signal: input 1D signal
+% fs: sample rate
+% windur: analysis window duration. used for difference function
+% threshold: thershold for peak detection
+% minfreq: minimal f0 frequency
+% stepsize: difference in samples between analysis points
+%
+% outputs:
+% f0: estimated fundamental frequency at analysis points
+% dips: dip height for each analysis point
+% time: times of respective analysis points
+
 Tmax = floor(1/minfreq * fs) + 2;
 winsize = floor(windur * fs);
 hops = winsize:stepsize:length(signal)-winsize-Tmax+1;

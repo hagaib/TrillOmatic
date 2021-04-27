@@ -1,4 +1,23 @@
 function [ f0_yinbird , dips_yinbird , time_yinbird ] = yinbird(signal , fs ,  windur , threshold , stepsize , energy_threshold , minfreq)
+% an implementation of yin bird, a yin based fundamental frequency
+% estimator sepcialized for bir sounds.
+% for more information, please refer to:
+% C.  O’Reilly,  N.  M.  Marples,  D.  J.  Kelly,  and  N.  Harte,  
+% “Yin-bird:  Improved  pitchtracking for bird vocalisations.,” in
+% INTERSPEECH, pp. 2641–2645, 2016.
+% inputs:
+% signal: input signal
+% fs: sample rate 
+% windur: analysis window duration in seconds
+% threshold: threshold for yin dips 
+% stepsize: interval between analysis points in samples
+% energy_threshold: energy threhsold for prominent frequencies
+% minfreq: minimal value for fundamental frequency in Herz.
+%
+% outputs:
+% f0_yinbird : estimated fundamental frequency at analysis points
+% dips_yinbird: dip height for each analysis point
+% time_yinbird: times of respective analysis points
 
 winsize = floor(windur*fs);
 overlap = winsize - stepsize;

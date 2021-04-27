@@ -6,7 +6,15 @@ function [periodictime , nonpertime , persegs , nonpersegs] = pertime(dips , tim
 %f0 ,periodic_bw : optional parameters . In case only frequencies of
 %specific bandwidh are relevant
 
-% output: 2 vectors in length(time). 
+% output:
+% periodictime: vector of indicator function for periodic portions of
+% signal
+% nonpertime: vector of indicator function for non periodic portions of
+% signal
+% persegs: table of starting and ending times for periodic portions of
+% signal
+% nonpersegs: table of starting and ending times for non periodic portions
+% of signal.
 
 
 if(nargin < 6) 

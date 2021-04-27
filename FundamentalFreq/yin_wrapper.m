@@ -1,4 +1,18 @@
 function yin = yin_wrapper(xx , fs , stepdur , min_freq)
+% wrapper function for YIN fundamental frequency estimator.
+% inputs:
+% xx: input 1D signal
+% fs: sample rate
+% stepdur: duration of interval between analysis points in seconds.
+% min_freq: minimal fundamental frequency in Herz.
+%
+%outputs:
+% yin: structure with the following fields:
+% yin.f0 = estimated fundamental frequency at analysis points
+% yin.dips = dip height at respective analysis points
+% yin.time = times of analysis points
+% yin.steprate = 1/stepdur
+
 windur = 0.0015; % around 2.7 pitch periods (1/2000)
 
 if(nargin<4)

@@ -1,7 +1,8 @@
 function [result_band , tpeaks] = area_of_interest4( audiofilename , isplot , x , fs)
 % Calculates fundamental frequency area of interest of input signal.
-% For more information please refer to Msc thesis by Hagai Barmatz or 
-% the upcoming paper.
+% For more information please refer to Msc thesis:
+% https://www.tau.ac.il/~stoledo/Theses/Hagai_Master_Thesis_4_0.pdf 
+% or the upcoming paper.
 %
 % input parameters:
 % audiofilename: input audio file name. It is ignored if parameters x and
