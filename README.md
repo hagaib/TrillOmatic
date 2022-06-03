@@ -14,7 +14,10 @@ Segmentation and analysis of bird trill vocalizations.
 In Proceedings of the International Conference on the Science of Electrical Engineering (ICSEE). IEEE, 2018. 
 
 ## Prerequisutes
-A standard Matlab installation, together with the signal processing toolbox.
+A standard Matlab installation, together with the signal processing toolbox. The software was developed and tested in Matlab 2020a.
+The following Matlab addons should be installed:
+* Alexander (2022). Levenberg-Marquardt toolbox (https://www.mathworks.com/matlabcentral/fileexchange/53449-levenberg-marquardt-toolbox), MATLAB Central File Exchange.
+* Alexander (2022). Jacobian toolbox (https://www.mathworks.com/matlabcentral/fileexchange/53440-jacobian-toolbox), MATLAB Central File Exchange.
 
 ## Running the trillOmatic
 first, run the matlab script `addpath_birds.m`. This will automatically add all relevant files 
